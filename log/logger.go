@@ -2,8 +2,9 @@ package log
 
 import (
 	"context"
-	"photon-core-starter/core"
 )
+
+type Action func(context context.Context) error
 
 type CoreLogger interface {
 	Debug(context.Context, string, ...any)
@@ -25,7 +26,7 @@ var (
 	}
 )
 
-var thisShutdownAction core.Action = func(context context.Context) error {
+var thisShutdownAction Action = func(context context.Context) error {
 	Logger().Info(context, "logger is shutting down")
 	return nil
 }
@@ -49,7 +50,7 @@ func RegisterInitAction(initAction InitAction) {
 	thisInitAction = initAction
 }
 
-func RegisterShutdownAction(shutdownAction core.Action) {
+func RegisterShutdownAction(shutdownAction Action) {
 	thisShutdownAction = shutdownAction
 }
 
