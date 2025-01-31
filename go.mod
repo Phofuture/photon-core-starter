@@ -1,4 +1,4 @@
-module photon-core-starter
+module github.com/dennesshen/photon-core-starter
 
 go 1.23.0
 
