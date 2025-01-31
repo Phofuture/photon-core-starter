@@ -2,13 +2,13 @@ package photonCoreStarter
 
 import (
 	"context"
+	"github.com/dennesshen/photon-core-starter/bean"
+	"github.com/dennesshen/photon-core-starter/configuration"
+	"github.com/dennesshen/photon-core-starter/core"
+	"github.com/dennesshen/photon-core-starter/log"
 	"log/slog"
 	"os"
 	"os/signal"
-	"photon-core-starter/bean"
-	"photon-core-starter/configuration"
-	"photon-core-starter/core"
-	"photon-core-starter/log"
 	"sync"
 	"syscall"
 	"time"
@@ -21,10 +21,10 @@ func Run() {
 	defer cancel()
 	// 讀取配置檔
 	configuration.InitConfiguration()
-
+	
 	// 啟動Bean容器初始化
 	bean.StartBeanManagement()
-
+	
 	// 核心依賴初始化
 	for _, action := range core.GetCoreDependencies() {
 		if err := action(mainContext); err != nil {
@@ -34,9 +34,9 @@ func Run() {
 	}
 	// 核心包初始化配置
 	_ = log.StartLogger()
-
+	
 	log.Logger().Info(mainContext, "application is starting")
-
+	
 	sign := make(chan os.Signal, 1)
 	signal.Notify(sign, syscall.SIGINT, syscall.SIGTERM)
 	once := sync.Once{}
@@ -46,10 +46,10 @@ func Run() {
 			cancel()
 		})
 	}
-
+	
 	// 附加模組初始化
 	startAddModule(mainContext, f)
-
+	
 	// 專案初始化
 	select {
 	case <-mainContext.Done():
@@ -57,18 +57,18 @@ func Run() {
 		startProject(mainContext, f)
 		log.Logger().Info(mainContext, "application is running")
 	}
-
+	
 	<-sign
 	log.Logger().Info(mainContext, "application is stopping")
-
+	
 	// 附加模組關閉
 	for _, action := range core.GetShutdownAddModule() {
 		_ = action(context.Background())
 	}
-
+	
 	// 核心包關閉
 	_ = log.ShutdownLogger()
-
+	
 	// 關閉核心依賴
 	for _, action := range core.GetShutdownCoreDependencies() {
 		func() {
