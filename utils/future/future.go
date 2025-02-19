@@ -10,45 +10,44 @@ type Future[T any] interface {
 }
 
 type NonResultFuture struct {
-	done       chan int
 	errorChain chan error
 }
 
 func (f *NonResultFuture) Get() (void Void, err error) {
-	<-f.done
 
-	select {
-	case err = <-f.errorChain:
+	if err = <-f.errorChain; err != nil {
 		return void, err
-	default:
-		return
 	}
+	return
 }
 
 func (f *NonResultFuture) Exceptionally(fn func(error)) Future[Void] {
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				fmt.Println("panic: ", r)
-			}
-		}()
-		if err := <-f.errorChain; err != nil {
-			fn(err)
-		}
-	}()
-	return f
-}
 
-func RunAsync(runnable Runnable) Future[Void] {
-	res := make(chan int)
-	errChan := make(chan error)
+	errChan := make(chan error, 1)
+
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				errChan <- fmt.Errorf("panic: %v", r)
 			}
 			close(errChan)
-			close(res)
+		}()
+		if err := <-f.errorChain; err != nil {
+			fn(err)
+			errChan <- err
+		}
+	}()
+	return &NonResultFuture{errorChain: errChan}
+}
+
+func RunAsync(runnable Runnable) Future[Void] {
+	errChan := make(chan error, 1)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				errChan <- fmt.Errorf("panic: %v", r)
+			}
+			close(errChan)
 		}()
 		err := runnable()
 		if err != nil {
@@ -56,5 +55,5 @@ func RunAsync(runnable Runnable) Future[Void] {
 		}
 	}()
 
-	return &NonResultFuture{done: res, errorChain: errChan}
+	return &NonResultFuture{errorChain: errChan}
 }
