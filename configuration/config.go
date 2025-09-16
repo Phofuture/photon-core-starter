@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"reflect"
@@ -52,9 +53,9 @@ func InitConfiguration() {
 		}
 	}
 
-	// for _, key := range viper.AllKeys() {
-	// 	fmt.Printf("%s = %v\n", key, viper.Get(key))
-	// }
+	for _, key := range viper.AllKeys() {
+		fmt.Printf("%s = %v\n", key, viper.Get(key))
+	}
 
 	env, ok := viper.Get("env.name").(string)
 	if ok {
