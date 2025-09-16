@@ -2,9 +2,7 @@ package configuration
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"os"
 	"reflect"
 	"strings"
 
@@ -28,14 +26,8 @@ func Register(config ...interface{}) {
 
 func InitConfiguration() {
 
-	//把所有環境變數塞進 viper
-	for _, e := range os.Environ() {
-		parts := strings.SplitN(e, "=", 2)
-		if len(parts) == 2 {
-			key := strings.ToLower(parts[0]) // 轉小寫，避免 key 太醜
-			viper.Set(key, parts[1])
-		}
-	}
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
 
 	for _, path := range pathArray {
 		for _, postfix := range postfixes {
@@ -51,10 +43,6 @@ func InitConfiguration() {
 			viper.SetConfigType("yaml")
 			_ = viper.MergeInConfig()
 		}
-	}
-
-	for _, key := range viper.AllKeys() {
-		fmt.Printf("%s = %v\n", key, viper.Get(key))
 	}
 
 	env, ok := viper.Get("env.name").(string)
