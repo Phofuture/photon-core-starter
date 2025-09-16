@@ -2,13 +2,9 @@ package configuration
 
 import (
 	"context"
-	"fmt"
+	"github.com/spf13/viper"
 	"log/slog"
 	"reflect"
-	"regexp"
-
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -26,38 +22,28 @@ func Register(config ...interface{}) {
 }
 
 func InitConfiguration() {
-	readCommandLineArgs()
 
-	viper.SetConfigName("application")
-	viper.SetConfigType("yaml")
+	viper.AutomaticEnv()
+
 	for _, path := range pathArray {
-		viper.AddConfigPath(path)
+		viper.SetConfigFile(path + "/application.yaml")
+		viper.SetConfigType("yaml")
+		_ = viper.MergeInConfig()
 	}
-	_ = viper.ReadInConfig()
 
 	env, ok := viper.Get("env.name").(string)
 	if ok {
-		viper.SetConfigName("application-" + env)
-		viper.SetConfigType("yaml")
-		_ = viper.ReadInConfig()
+		for _, path := range pathArray {
+			viper.SetConfigFile(path + "/application-" + env + ".yaml")
+			viper.SetConfigType("yaml")
+			_ = viper.MergeInConfig()
+		}
 	}
+
 	for _, config := range configs {
 		err := viper.Unmarshal(&config)
 		if err != nil {
 			slog.Error("解析 config 錯誤: ", "config", config, "error", err)
-		}
-	}
-}
-
-func readCommandLineArgs() {
-	pflag.Parse()
-	args := pflag.Args()
-
-	regex := regexp.MustCompile(`([a-zA-Z][a-zA-Z0-9_-]*)=(.*)$`)
-	for _, arg := range args {
-		fmt.Println("arg", arg)
-		if matches := regex.FindStringSubmatch(arg); matches != nil {
-			viper.Set(matches[1], matches[2])
 		}
 	}
 }
