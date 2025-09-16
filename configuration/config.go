@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"reflect"
-	"regexp"
+	"strings"
 
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 var (
 	configs   = make([]interface{}, 0)
 	pathArray = []string{"./src/resources", "./src", "."}
+	postfixes = []string{".yaml", ".yml"}
 )
 
 func Register(config ...interface{}) {
@@ -26,38 +27,58 @@ func Register(config ...interface{}) {
 }
 
 func InitConfiguration() {
-	readCommandLineArgs()
 
-	viper.SetConfigName("application")
-	viper.SetConfigType("yaml")
-	for _, path := range pathArray {
-		viper.AddConfigPath(path)
+	//把所有環境變數塞進 viper
+	for _, e := range os.Environ() {
+		parts := strings.SplitN(e, "=", 2)
+		if len(parts) == 2 {
+			key := strings.ToLower(parts[0]) // 轉小寫，避免 key 太醜
+			viper.Set(key, parts[1])
+		}
 	}
-	_ = viper.ReadInConfig()
+
+	for _, path := range pathArray {
+		for _, postfix := range postfixes {
+			viper.SetConfigFile(path + "/config" + postfix)
+			viper.SetConfigType("yaml")
+			_ = viper.MergeInConfig()
+		}
+	}
+
+	for _, path := range pathArray {
+		for _, postfix := range postfixes {
+			viper.SetConfigFile(path + "/application" + postfix)
+			viper.SetConfigType("yaml")
+			_ = viper.MergeInConfig()
+		}
+	}
+
+	for _, key := range viper.AllKeys() {
+		fmt.Printf("%s = %v\n", key, viper.Get(key))
+	}
 
 	env, ok := viper.Get("env.name").(string)
 	if ok {
-		viper.SetConfigName("application-" + env)
-		viper.SetConfigType("yaml")
-		_ = viper.ReadInConfig()
+		for _, path := range pathArray {
+			for _, postfix := range postfixes {
+				viper.SetConfigFile(path + "/config-" + env + postfix)
+				viper.SetConfigType("yaml")
+				_ = viper.MergeInConfig()
+			}
+		}
+		for _, path := range pathArray {
+			for _, postfix := range postfixes {
+				viper.SetConfigFile(path + "/application-" + env + postfix)
+				viper.SetConfigType("yaml")
+				_ = viper.MergeInConfig()
+			}
+		}
 	}
+
 	for _, config := range configs {
 		err := viper.Unmarshal(&config)
 		if err != nil {
 			slog.Error("解析 config 錯誤: ", "config", config, "error", err)
-		}
-	}
-}
-
-func readCommandLineArgs() {
-	pflag.Parse()
-	args := pflag.Args()
-
-	regex := regexp.MustCompile(`([a-zA-Z][a-zA-Z0-9_-]*)=(.*)$`)
-	for _, arg := range args {
-		fmt.Println("arg", arg)
-		if matches := regex.FindStringSubmatch(arg); matches != nil {
-			viper.Set(matches[1], matches[2])
 		}
 	}
 }
