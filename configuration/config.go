@@ -31,36 +31,23 @@ func InitConfiguration() {
 
 	for _, path := range pathArray {
 		for _, postfix := range postfixes {
-			viper.SetConfigFile(path + "/config" + postfix)
-			viper.SetConfigType("yaml")
-			_ = viper.MergeInConfig()
-		}
-	}
-
-	for _, path := range pathArray {
-		for _, postfix := range postfixes {
-			viper.SetConfigFile(path + "/application" + postfix)
+			viper.SetConfigFile(path + "/app" + postfix)
 			viper.SetConfigType("yaml")
 			_ = viper.MergeInConfig()
 		}
 	}
 
 	env, ok := viper.Get("env.name").(string)
+
 	if ok {
 		for _, path := range pathArray {
 			for _, postfix := range postfixes {
-				viper.SetConfigFile(path + "/config-" + env + postfix)
+				viper.SetConfigFile(path + "/" + env + postfix)
 				viper.SetConfigType("yaml")
 				_ = viper.MergeInConfig()
 			}
 		}
-		for _, path := range pathArray {
-			for _, postfix := range postfixes {
-				viper.SetConfigFile(path + "/application-" + env + postfix)
-				viper.SetConfigType("yaml")
-				_ = viper.MergeInConfig()
-			}
-		}
+
 	}
 
 	for _, config := range configs {
