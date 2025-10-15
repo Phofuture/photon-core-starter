@@ -29,8 +29,13 @@ func main() {
 
 #### 檔案命名規則
 
-1. **基礎配置檔案**：`app.yml` 或 `app.yaml`
-2. **環境特定配置**：`{env}.yml` 或 `{env}.yaml`（例如：`dev.yml`、`prod.yml`）
+1. **基礎配置檔案**：支援以下命名格式
+   - `app.yml` / `app.yaml`
+   - `config.yml` / `config.yaml`
+   - `application.yml` / `application.yaml`
+
+2. **環境特定配置**：`{prefix}-{env}.yml` 或 `{prefix}-{env}.yaml`
+   - 例如：`config-dev.yml`、`app-prod.yml`、`application-dev.yaml`
 
 #### 配置檔案搜尋路徑
 
@@ -41,13 +46,15 @@ func main() {
 
 ### 配置載入順序
 
-1. 載入 `app.yml` 作為基礎配置
-2. 根據 `env.name` 的值載入對應的環境配置（如 `dev.yml`）
+1. 載入基礎配置檔案（`app.yml`、`config.yml` 或 `application.yml`）
+2. 根據 `env.name` 的值載入對應的環境配置（如 `config-dev.yml`、`app-prod.yml`）
 3. 環境變數覆蓋配置項（使用 `_` 替代 `.`）
+
+> **注意**：系統會依序合併所有找到的配置檔案，後載入的配置會覆蓋先前的設定。
 
 ### 配置檔案範例
 
-#### app.yml（基礎配置）
+#### config.yml（基礎配置）
 ```yaml
 env:
   name: dev  # 環境名稱，決定要載入哪個環境配置檔案
@@ -61,7 +68,7 @@ database:
   port: 5432
 ```
 
-#### dev.yml（開發環境配置）
+#### config-dev.yml（開發環境配置）
 ```yaml
 database:
   host: localhost
@@ -74,7 +81,7 @@ log:
   level: debug
 ```
 
-#### prod.yml（生產環境配置）
+#### config-prod.yml（生產環境配置）
 ```yaml
 database:
   host: prod-db.example.com
