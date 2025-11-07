@@ -71,3 +71,11 @@ func Get[T any](ctx context.Context) (config T, err error) {
 	}
 	return
 }
+
+func GetEnvName() string {
+	env, ok := viper.Get("env.name").(string)
+	if !ok {
+		return ""
+	}
+	return env
+}
