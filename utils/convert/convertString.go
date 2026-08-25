@@ -10,6 +10,10 @@ func StringToInt(s string) (int, error) {
 	return strconv.Atoi(s)
 }
 
+func ParseInt64(s string) (int64, error) {
+	return strconv.ParseInt(s, 10, 64)
+}
+
 func IntSafeToUint(i int) (res uint, err error) {
 	if i < 0 {
 		return 0, strconv.ErrRange
